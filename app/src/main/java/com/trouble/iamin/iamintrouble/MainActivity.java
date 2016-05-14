@@ -205,7 +205,8 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
+                PhoneContact.sendSMSToContacts("Help me!!! (testing so please ignore)");
+                Snackbar.make(view, "Sending SMS texts to all my contacts!", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
             }
         });
@@ -218,6 +219,8 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        PhoneContact.preFetchContacts(this);
     }
 
     @Override
