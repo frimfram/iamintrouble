@@ -371,9 +371,9 @@ public class MainActivity extends AppCompatActivity
     private void postStatusUpdate() {
         Profile profile = Profile.getCurrentProfile();
         ShareLinkContent linkContent = new ShareLinkContent.Builder()
-                .setContentTitle("Hello Facebook")
+                .setContentTitle("I am in trouble. Help me")
                 .setContentDescription(
-                        "The 'Hello Facebook' sample  showcases simple Facebook integration")
+                        "Current Location: 1 Hacker Way, Menlo Park CA 94025")
                 .setContentUrl(Uri.parse("http://developers.facebook.com/docs/android"))
                 .build();
         if (canPresentShareDialog) {
