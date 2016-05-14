@@ -1,12 +1,14 @@
 package com.trouble.iamin.iamintrouble;
 
 import android.app.AlertDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity
     private final String PENDING_ACTION_BUNDLE_KEY =
             "com.example.hellofacebook:PendingAction";
 
+    private Handler mainHandler;
     private Button postStatusUpdateButton;
     private Button postPhotoButton;
     private ProfilePictureView profilePictureView;
@@ -106,6 +109,8 @@ public class MainActivity extends AppCompatActivity
         POST_PHOTO,
         POST_STATUS_UPDATE
     }
+
+    private Context mContext;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -179,9 +184,13 @@ public class MainActivity extends AppCompatActivity
         greeting = (TextView) findViewById(R.id.greeting);
 
         postStatusUpdateButton = (Button) findViewById(R.id.postStatusUpdateButton);
+        mContext = this;
         postStatusUpdateButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View view) {
                 onClickPostStatusUpdate();
+                PhoneContact.sendSMSToContacts("Help me!!!");
+                Snackbar.make(view, "Sending SMS texts to all my contacts!", Snackbar.LENGTH_LONG)
+                        .setAction("Action", null).show();
             }
         });
 
@@ -205,9 +214,18 @@ public class MainActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PhoneContact.sendSMSToContacts("Help me!!! (testing so please ignore)");
-                Snackbar.make(view, "Sending SMS texts to all my contacts!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
+                mainHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        recordVideo();
+                        mainHandler.postDelayed(new Runnable() {
+                            @Override
+                            public void run() {
+                                mContext.stopService(new Intent(MainActivity.this, RecorderService.class));
+                            }
+                        }, 10000);
+                    }
+                }, 1000);
             }
         });
 
@@ -220,6 +238,7 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        mainHandler = new Handler();
         PhoneContact.preFetchContacts(this);
     }
 
@@ -337,6 +356,12 @@ public class MainActivity extends AppCompatActivity
                 postStatusUpdate();
                 break;
         }
+    }
+
+    private void recordVideo() {
+        Intent intent = new Intent(MainActivity.this, RecorderService.class);
+        intent.putExtra(RecorderService.INTENT_VIDEO_PATH, "/Video/"); //eg: "/video/camera/"
+        startService(intent);
     }
 
     private void onClickPostStatusUpdate() {
