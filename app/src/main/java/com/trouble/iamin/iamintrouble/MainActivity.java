@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.hardware.Sensor;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.net.Uri;
 import android.os.Bundle;
@@ -23,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.facebook.AccessToken;
 import com.facebook.CallbackManager;
@@ -111,6 +114,11 @@ public class MainActivity extends AppCompatActivity
     }
 
     private Context mContext;
+
+    // The following are used for the shake detection
+    private SensorManager mSensorManager;
+    private Sensor mAccelerometer;
+    private ShakeDetector mShakeDetector;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -222,8 +230,10 @@ public class MainActivity extends AppCompatActivity
                             @Override
                             public void run() {
                                 mContext.stopService(new Intent(MainActivity.this, RecorderService.class));
+                                Toast.makeText(MainActivity.this, "Video recording stopped", Toast.LENGTH_SHORT).show();
                             }
                         }, 10000);
+                        Toast.makeText(MainActivity.this, "Video recording started", Toast.LENGTH_SHORT).show();
                     }
                 }, 1000);
             }
@@ -237,6 +247,24 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        // ShakeDetector initialization
+        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+        mAccelerometer = mSensorManager
+                .getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        mShakeDetector = new ShakeDetector();
+        mShakeDetector.setOnShakeListener(new ShakeDetector.OnShakeListener() {
+
+            @Override
+            public void onShake(int count) {
+				/*
+				 * The following method, "handleShakeEvent(count):" is a stub //
+				 * method you would use to setup whatever you want done once the
+				 * device has been shook.
+				 */
+                handleShakeEvent(count);
+            }
+        });
 
         mainHandler = new Handler();
         PhoneContact.preFetchContacts(this);
@@ -303,6 +331,13 @@ public class MainActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
         updateUI();
+        mSensorManager.registerListener(mShakeDetector, mAccelerometer, SensorManager.SENSOR_DELAY_UI);
+    }
+
+    @Override
+    protected void onPause() {
+        mSensorManager.unregisterListener(mShakeDetector);
+        super.onPause();
     }
 
     @Override
@@ -420,6 +455,20 @@ public class MainActivity extends AppCompatActivity
         if (accessToken != null || allowNoToken) {
             pendingAction = action;
             handlePendingAction();
+        }
+    }
+
+    private void handleShakeEvent(int count) {
+        if (count > 0) {
+            recordVideo();
+            mainHandler.postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    mContext.stopService(new Intent(MainActivity.this, RecorderService.class));
+                    Toast.makeText(MainActivity.this, "Video recording stopped", Toast.LENGTH_SHORT).show();
+                }
+            }, 10000);
+            Toast.makeText(MainActivity.this, "Video recording started", Toast.LENGTH_SHORT).show();
         }
     }
 }
